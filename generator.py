@@ -11,7 +11,7 @@ def to_categorical(y, nb_class):
     Y[np.arange(len(y)),y] = 1.
     return Y
 
-def get_random_data(annotation_line, num_class, is_train, root='/mnt/sdf/clf8113/datasets/CUB_200_2011'):
+def get_random_data(annotation_line, num_class, is_train, root='datasets/CUB_200_2011'):
     '''random preprocessing for real-time data augmentation'''
     line = annotation_line.split()
     mean = [103.939, 116.779, 123.68]
