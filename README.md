@@ -9,3 +9,6 @@ This is an implementation of NTS-Net(https://arxiv.org/pdf/1809.00287.pdf) on Py
 - numpy
 - opencv-python 3.4+
 - datetime
+
+## Datasets
+Download the [CUB-200-2011](http://www.vision.caltech.edu/visipedia-data/CUB-200-2011/CUB_200_2011.tgz) datasets and put it in the dataset directory named **CUB_200_2011**, You can also try other fine-grained datasets.
