@@ -12,6 +12,9 @@ This is an implementation of NTS-Net(https://arxiv.org/pdf/1809.00287.pdf) on Py
 ## Datasets
 Download the [CUB-200-2011](http://www.vision.caltech.edu/visipedia-data/CUB-200-2011/CUB_200_2011.tgz) datasets and put it in the dataset directory named **CUB_200_2011**, You can also try other fine-grained datasets.
 
+## Train the model
+You may need to change the configurations in config.py. 
+
 ## Acknowledgement
 Original implementation
 [NTS-Net](https://github.com/yangze0930/NTS-Net)
