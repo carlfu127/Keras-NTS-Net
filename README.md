@@ -17,4 +17,4 @@ Original implementation
 [NTS-Net](https://github.com/yangze0930/NTS-Net)
 
 Third Party Libs
-[NTS-Net_keras](https://github.com/He-Jian/NTS-Net-keras)
+[NTS-Net-keras](https://github.com/He-Jian/NTS-Net-keras)
