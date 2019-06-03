@@ -146,5 +146,5 @@ def create_attention_model(topN, PROPOSAL_NUM, num_cls, pad_side=224):
     selected_scores = Lambda(lambda x: K.reshape(x, (-1, PROPOSAL_NUM, 1)))(selected_scores)
     concat_rank = Concatenate(axis=-1)([part_prob, selected_scores])
     concat_rank = Reshape((PROPOSAL_NUM*(num_cls+1),), name='rank')(concat_rank)
-    part_prob2 = Reshape((PROPOSAL_NUM*num_cls,), name='partcls')(part_prob)
-    return keras.models.Model(input_image, [raw_prob, concat_logits, part_prob2, concat_rank])
+    part_prob = Reshape((PROPOSAL_NUM*num_cls,), name='partcls')(part_prob)
+    return keras.models.Model(input_image, [raw_prob, concat_logits, part_prob, concat_rank])
