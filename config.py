@@ -8,4 +8,4 @@ CAT_NUM = 4
 initial_learning_rate = 0.001
 weight_decay = 1e-4
 save_weights_path = 'models/cub200'
-dataset_dir = 'datasets/CUB_200_2011'
+dataset_dir = 'dataset/CUB_200_2011'
