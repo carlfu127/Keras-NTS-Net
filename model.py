@@ -8,11 +8,10 @@ from anchors import generate_default_anchor_maps
 from config import *
 
 class CropImage(keras.engine.Layer):
-    def __init__(self, nbox, pad_side=224, img_size=224, **kwargs):
+    def __init__(self, nbox, img_size=224, **kwargs):
         self.nbox = nbox
         self.w = img_size
         self.h = img_size
-        self.pad_side = pad_side
         super(CropImage, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
