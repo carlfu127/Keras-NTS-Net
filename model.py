@@ -7,7 +7,6 @@ from keras.applications.resnet50 import ResNet50
 from anchors import generate_default_anchor_maps
 from config import *
 
-
 class CropImage(keras.engine.Layer):
     def __init__(self, nbox, pad_side=224, img_size=224, **kwargs):
         self.nbox = nbox
@@ -35,13 +34,13 @@ class Proposals(keras.engine.Layer):
         self.PROPOSAL_NUM = PROPOSAL_NUM
         self.pad_side = pad_side
         edge_anchors = generate_default_anchor_maps()
-        self.anchors = (edge_anchors + pad_side).astype(np.float32)
+        self.anchors = (edge_anchors + pad_side).astype(np.int32).astype(np.float32)
         super(Proposals, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
         rpn_score = inputs
         indices = K.map_fn(lambda x: tf.image.non_max_suppression(self.anchors, K.cast(x, tf.float32),
-                                          self.PROPOSAL_NUM, iou_threshold=0.25), rpn_score, dtype=tf.int32)
+                                          self.PROPOSAL_NUM, iou_threshold=0.25, name='nms'), rpn_score, dtype=tf.int32)
         proposals = K.map_fn(lambda x: K.gather(self.anchors, K.cast(x, tf.int32)), indices, dtype=tf.float32)
         scores = K.map_fn(lambda x: K.gather(x[0], K.cast(x[1], tf.int32)), (rpn_score, indices), dtype=tf.float32)
         scores = K.expand_dims(scores, axis=-1)
@@ -59,6 +58,7 @@ def res50(num_cls):
     feature2 = base_model.output
     feature2 = Dropout(rate=0.5)(feature2)
     resnet_out = Dense(num_cls, activation='softmax',
+                       kernel_initializer='he_uniform',
                        kernel_regularizer=regularizers.l2(weight_decay),
                        bias_regularizer=regularizers.l2(weight_decay))(feature2)
     return keras.models.Model(inputs, [resnet_out, feature1, feature2], name='raw')
@@ -66,34 +66,41 @@ def res50(num_cls):
 def proposalnet():
     inputs = Input(shape=(None, None, 2048))
     down1 = Conv2D(filters=128, kernel_size=3, strides=1, padding='same',
+                   kernel_initializer='he_uniform',
                    kernel_regularizer=regularizers.l2(weight_decay),
                    bias_regularizer=regularizers.l2(weight_decay))(inputs)
     d1 = ReLU()(down1)
     down2 = Conv2D(filters=128, kernel_size=3, strides=2, padding='same',
+                   kernel_initializer='he_uniform',
                    kernel_regularizer=regularizers.l2(weight_decay),
                    bias_regularizer=regularizers.l2(weight_decay))(d1)
     d2 = ReLU()(down2)
     down3 = Conv2D(filters=128, kernel_size=3, strides=2, padding='same',
+                   kernel_initializer='he_uniform',
                    kernel_regularizer=regularizers.l2(weight_decay),
                    bias_regularizer=regularizers.l2(weight_decay))(d2)
     d3 = ReLU()(down3)
 
     t1 = Reshape((-1,))(Conv2D(filters=6, kernel_size=1, strides=1,
+                               kernel_initializer='he_uniform',
                                kernel_regularizer=regularizers.l2(weight_decay),
                                bias_regularizer=regularizers.l2(weight_decay))(d1))
     t2 = Reshape((-1,))(Conv2D(filters=6, kernel_size=1, strides=1,
+                               kernel_initializer='he_uniform',
                                kernel_regularizer=regularizers.l2(weight_decay),
                                bias_regularizer=regularizers.l2(weight_decay))(d2))
     t3 = Reshape((-1,))(Conv2D(filters=9, kernel_size=1, strides=1,
+                               kernel_initializer='he_uniform',
                                kernel_regularizer=regularizers.l2(weight_decay),
                                bias_regularizer=regularizers.l2(weight_decay))(d3))
 
     t = Concatenate(axis=-1)([t1,t2,t3])
     return keras.models.Model(inputs, t)
 
-def concatnet(num_cls):
-    inputs = Input(shape=(2048*5,))
+def concatnet(num_cls, topN):
+    inputs = Input(shape=(2048*(topN+1),))
     out = Dense(num_cls, activation='softmax',
+                kernel_initializer='he_uniform',
                 kernel_regularizer=regularizers.l2(weight_decay),
                 bias_regularizer=regularizers.l2(weight_decay))(inputs)
     return keras.models.Model(inputs, out, name='concat')
@@ -101,6 +108,7 @@ def concatnet(num_cls):
 def partclsnet(num_cls):
     inputs = Input(shape=(2048,))
     out = Dense(num_cls, activation='softmax',
+                kernel_initializer='he_uniform',
                 kernel_regularizer=regularizers.l2(weight_decay),
                 bias_regularizer=regularizers.l2(weight_decay))(inputs)
     return keras.models.Model(inputs, out)
@@ -110,7 +118,7 @@ def create_attention_model(topN, PROPOSAL_NUM, num_cls, pad_side=224):
 
     pretrained_model = res50(num_cls)
     proposal_net = proposalnet()
-    concat_net = concatnet(num_cls)
+    concat_net = concatnet(num_cls, topN)
     partcls_net = partclsnet(num_cls)
 
     resnet_out, rpn_feature, feature = pretrained_model(input_image)
@@ -138,5 +146,5 @@ def create_attention_model(topN, PROPOSAL_NUM, num_cls, pad_side=224):
     selected_scores = Lambda(lambda x: K.reshape(x, (-1, PROPOSAL_NUM, 1)))(selected_scores)
     concat_rank = Concatenate(axis=-1)([part_prob, selected_scores])
     concat_rank = Reshape((PROPOSAL_NUM*(num_cls+1),), name='rank')(concat_rank)
-    part_prob2 = Reshape((PROPOSAL_NUM*num_cls,), name='partcls')(part_prob)#Lambda(lambda x: K.reshape(x, (-1, PROPOSAL_NUM * num_cls)), name='partcls')(part_logits)
+    part_prob2 = Reshape((PROPOSAL_NUM*num_cls,), name='partcls')(part_prob)
     return keras.models.Model(input_image, [raw_prob, concat_logits, part_prob2, concat_rank])
