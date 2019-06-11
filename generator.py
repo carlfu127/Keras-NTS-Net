@@ -22,7 +22,7 @@ def get_random_data(annotation_line, num_class, is_train, root='dataset/CUB_200_
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     gt = int(line[1])
     image = cv2.resize(img, (600, 600), interpolation=cv2.INTER_LINEAR)
-    w, h, _ = image.shape
+    h, w, _ = image.shape
     th, tw, _ = output_size
     if is_train:
         i = random.randint(0, h - th)
