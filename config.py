@@ -1,5 +1,5 @@
 gpus = '0,1,2,3'
-batch_size = 16
+batch_size = 4
 num_cls = 200
 INPUT_SIZE = (448, 448)
 PROPOSAL_NUM = 6
